@@ -8,6 +8,6 @@ After you complete a search you can then apply a new, unique tag to the results 
 them again in the application. 
 
 This product is provided without warranty or guarantee. If you would like to see the most current example
-you may see it at (crackbrain)[http://crackbra.in]
+you may see it at [crackbrain](http://crackbra.in)
 
 Thanks!
