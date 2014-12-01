@@ -3,6 +3,7 @@
 
 import xmlrpclib
 import time
+import random
 
 defaultStart='20000101T00:00:00'
 defaultEnd='29991231T23:59:59'
@@ -14,6 +15,22 @@ class ISTag:
 		self.tagid=tagid
 		self.name=tagname
 		self.categoryid=categoryid
+
+class BasicContact:
+	def __init__(self, contactID, fname=None, lname=None, emailAddress=None ):
+		self.cid = contactID
+		if not fname:
+			self.fname="No fName"
+		else:
+			self.fname=u''.join(fname).encode('utf-8').strip()
+		if not lname:
+			self.lname="No lName"
+		else:
+			self.lname=u''.join(lname).encode('utf-8').strip()
+		if not emailAddress:
+			self.email="no Email Listed"
+		else:
+			self.email=u''.join(emailAddress).encode('utf-8').strip()
 
 class TagAppliedRecord:
 
@@ -62,7 +79,7 @@ class ISServer:
 		self.getAllTags()
 
 
-	def getContactsWithTag(self, startdate, enddate, tagID=303):
+	def getContactsWithTag(self, startdate="19000101T00:00:00", enddate="30001231T23:59:59", tagID=303):
 		records=[]
 		sdate = time.strptime(startdate, '%Y%m%dT%H:%M:%S')
 		edate = time.strptime(enddate, '%Y%m%dT%H:%M:%S')
@@ -76,6 +93,38 @@ class ISServer:
 			if not(len(listOfDicts)==1000):
 				break
 			p=p+1
+		return records
+
+	def getContactIDWithTag(self, tagID):
+		records = []
+		p=0
+		while True:
+			listOfDicts = self.connection.DataService.query(self.infusionsoftAPIKey, 'ContactGroupAssign', 1000,p,{'GroupId':tagID}, ['Contact.Id', 'Contact.FirstName', 'Contact.LastName', 'Contact.Email' ], 'Contact.Id', True)
+			for eachContact in listOfDicts:
+				interestingData = ["Contact.FirstName", "Contact.LastName", 'Contact.Email']
+				for eachbit in interestingData:
+					if not eachContact.has_key(eachbit):
+						eachContact[eachbit]=None
+				records.append(BasicContact(eachContact['Contact.Id'], fname=eachContact['Contact.FirstName'], lname=eachContact['Contact.LastName'], emailAddress=eachContact['Contact.Email']))
+			if not(len(listOfDicts)==1000):
+				break
+			p+=1
+		return records
+
+	def getAllContacts(self):
+		records = []
+		p=0
+		while True:
+			listOfDicts = self.connection.DataService.query(self.infusionsoftAPIKey, 'Contact', 1000,p,{},['Id', 'FirstName', 'LastName', 'Email'], 'Id', True)
+			for eachContact in listOfDicts:
+				interestingData=['FirstName',"LastName",'Email']
+				for eachbit in interestingData:
+					if not eachContact.has_key(eachbit):
+						eachContact[eachbit]=None
+				records.append(BasicContact(eachContact['Id'], fname=eachContact['FirstName'], lname=eachContact['LastName'], emailAddress=eachContact['Email']))
+			if not(len(listOfDicts)==1000):
+				break
+			p+=1
 		return records
 
 	def verifyConnection(self):
@@ -94,6 +143,7 @@ class ISServer:
 	def addTagToContact(self, contactID, tagID):
 		self.connection.ContactService.addToGroup(self.infusionsoftAPIKey, contactID, tagID)
 
+
 def prehead():
 	pagehtml="""Content-type: text/html\n\n\n"""
 	return pagehtml
@@ -102,6 +152,7 @@ def htmlHead():
 	pagehtml = """
 	<html>
 		<head>
+			<link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
 			<script src="//code.jquery.com/jquery-1.10.2.js"></script>
 			<script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
 			<script>
@@ -109,6 +160,42 @@ def htmlHead():
 					$( ".datepicker" ).datepicker();
 				});
 			</script>
+
+			<style>
+
+				@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,700);
+
+				* {
+				  padding:0;
+				  margin:0;
+				  position:relative;
+				  box-sizing:border-box;
+				}
+				body {
+				  font-size:16px;
+				  font-family: 'Open Sans', sans-serif;
+				}
+
+
+
+				h1,h2,h3 {
+				  color:#fff;
+				  text-align:center;
+				}
+				.errormessage{
+					color: red;
+					text-align: center;
+					font-size: 64px;
+				}
+			</style>
+
+
+							
+
+			<meta http-equiv="Content-type" content="text/html;" />
+			<title> Crackbrain: One off functions for Infusionsoft</title>
+			<meta name="description" Content="One off searches and functions that are not a part of Infusionsoft." />
+
 		</head>
 		<body>
 	"""
@@ -120,6 +207,7 @@ def menu():
 		<form method="POST">
 			<input type="submit" name="logout" value="Logout">
 			<input type="submit" name="btar" value="Better tag application report">
+			<input type="submit" name="rancon" value="Pick Random Contacts">
 		</form>
 	</div>
 	"""
@@ -127,11 +215,45 @@ def menu():
 
 def selectionScreen(dictOfTags):
 	pagehtml = """
+
+			<div class="btarExplanation">
+				<p>
+					This report will show all applications of the chosen tag to contacts within the given range.  
+					<br /> <br />
+					If a tag has been removed its record has been removed from it as well.  This means that the 
+					report will only show records that still have the tag if it was applied within the date range. 
+					This also means that if a contact has had the same tag applied more than once, only the most 
+					recent application will populate in this report. 
+					<br /><br />
+					After you get the results of this report you can create a new tag to apply to the contacts who meet
+					the search criteria so that you can find them in the application.  
+				</p>
+			</div>
 			<form method="POST" action="">
-				<input type="hidden" name="runbtar" value="run">
-				<input type="text" class="datepicker" name="startdate">
-				<input type="text" class="datepicker" name="enddate">
-				<select size="10" multiple name="tags">
+				<div class="btarReportSettings">
+					<div class="datepickers">
+						<table>
+							<tr>
+								<td width="310px">
+									<input type="hidden" name="runbtar" value="run">
+									<label for="startdate" >Start Date:</label>
+									<input type="text" class="datepicker text" name="startdate" style="width:300px;">
+									
+								</td>
+								<td width="310px">
+									
+									<label for="enddate">End Date:</label>
+									<input type="text" class="datepicker text" name="enddate" style="width:300px;">
+									
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div>
+						
+						<label for="tags">Tag of interest: </label>
+						<select  name="tags">
+							<option value="" disabled selected>Select a tag</option>
 	"""
 	tagids=dictOfTags.keys()
 	taglist=[]
@@ -143,7 +265,10 @@ def selectionScreen(dictOfTags):
 					<option value="%s">%s</option>
 		""" %(str(eachid[0]), eachid[1])
 	pagehtml = pagehtml + """
-				</select>
+						</select>
+						
+					</div>
+				</div>
 				<input type="Submit" value="Search">
 			</form>
 	"""
@@ -152,6 +277,15 @@ def selectionScreen(dictOfTags):
 def processInfo(postdata,server):
 	contacts=[]
 	taglist=[]
+	alltags=[]
+
+	server.prep()
+
+	tagids=server.tags.keys()
+	for eachid in tagids:
+		alltags.append((eachid, server.tags[eachid].name))
+	alltags.sort(key=lambda val:val[1])
+
 	if postdata.has_key('startdate'):
 		smonth, sday, syear=postdata['startdate'].value.split('/')
 		smonth = "%02d" %int(smonth)
@@ -180,12 +314,35 @@ def processInfo(postdata,server):
 	pagehtml= """
 			<form method="POST" action="">
 				<div>
-					Create the following tag and apply to all records: <input type='text' name='tagtoapply' value="%s"><br />
-					<input type="submit" name="createandapplytag" value="Create and apply tag">
-					<p>
-						Note: this does not use an existing tag, even if you type the name of an existing tag in.  It will create
-						a brand new tag, no matter what.
-					</p>
+					<table>
+						<tr>
+							<td width = "500">
+								<input type="radio" name="neworold" value="old" checked>
+								<label for="tags">
+									Apply existing tag to all contacts:
+								</label>
+								
+								<select name="tags" style="width: 300px;">
+									<option value="" disabled selected>Select a tag</option>
+	"""
+	for eachid in alltags:
+		pagehtml = pagehtml + """
+									<option value="%s">%s</option>
+		""" %(str(eachid[0]), eachid[1])
+	pagehtml += """
+								</select>
+								
+							</td>
+							<td width = "500">
+								<input type="radio" name="neworold" value="new">
+								<label>Create and apply this tag</label>
+								<input type='text' name='tagtoapply' class="text">
+								
+							</td>
+						</tr>
+					</table>
+
+					<input type="submit" name="createandapplytag" value="Apply tag">
 				</div>
 				<table>
 					<tr>
@@ -195,7 +352,7 @@ def processInfo(postdata,server):
 						<td width="200">Tag</td>
 						<td width="200">Applied</td>
 					</tr>
-	""" %(newtagstring)
+	"""
 	for eachsearch in contacts:
 		for eachrecord in eachsearch:
 			recordURL="https://" + server.infusionsoftapp + ".infusionsoft.com/Contact/manageContact.jsp?view=edit&ID=" + str(eachrecord.contactID)
@@ -218,6 +375,30 @@ def processInfo(postdata,server):
 
 def gatherInfo():
 	pagehtml= """
+
+				<div class="p1">
+					<h3>Welcome to Crackbra.in.</h3>
+					<p>
+						This is my personal collection of Infusionsoft functions that provide some added functionality to the core application.
+						These functions are in no way affiliated with Infusionsoft nor any of its affiliates, they are just a set of functions 
+						that I expect that users will find useful.  
+						<br />
+						These functions are provided with absolutely no warranty, guarantee, or any avenue of real meaningful support.  As of the
+						time of this writing there are no functions that remove data from your Infusionsoft application, nor are there any that store data anywhere except in a cookie on your computer.  I use this so that I do not have to pass the app name and API key through hidden fields the whole time you are browsing. If you log out it will delete the cookie.  
+						<br />
+						You can examine the most recent copy of the source code (that I have been bothered to upload) <a href="https://github.com/jeremiahmarks/betterTagApplicationReport">on its github page</a>, so you can self host this if you so wish.  This is also available so that you can improve it, please do fork the daylights out of it!. 
+					</p>
+				</div>
+
+				<div class="p2">
+					<p>
+						If the most recent version of code that is operating here does not appear to be hosted on github, or there is some 
+						functionality that you would like to see implemented, please do <a href="mailto:jeremiah@crackbra.in">email me</a> 
+						and let me know.  
+					</p>
+				</div>
+
+
 			<form method="POST">
 				<label for="appname">Appname</label>
 				<input type="text" name="appname" id="appname">
@@ -228,7 +409,8 @@ def gatherInfo():
 	"""
 	return pagehtml
 
-def overview(server):
+def overview(server, errormessage=None):
+
 	totalTags = server.getCount('ContactGroup',{})
 	totalContacts=server.getCount('Contact',{})
 	pagehtml = """
@@ -242,6 +424,10 @@ def overview(server):
 					<td>%s</td>
 				</tr>
 			</table>""" %(str(totalTags), str(totalContacts))
+	if errormessage:
+		pagehtml+= """
+		<div class="errormessage">%s</div>
+		""" %(errormessage)
 	return pagehtml
 
 def updateSeveralContacts(postdata, newTagId, server):
@@ -250,6 +436,178 @@ def updateSeveralContacts(postdata, newTagId, server):
 		if (eachkey[:6]=="update"):
 			cid=int(postdata[eachkey].value)
 			server.addTagToContact(cid, newTagId)
+
+def randomContacts(postdata, server):
+	alltags=[]
+
+	server.prep()
+
+	tagids=server.tags.keys()
+	for eachid in tagids:
+		alltags.append((eachid, server.tags[eachid].name))
+	alltags.sort(key=lambda val:val[1])
+
+	pagehtml = """
+	<div class="ranconExplanation" >
+		<p>
+			This function will allow you to choose a number of your contacts at random.  You can choose either
+			from the pool of all contacts, or just the contacts with one particular tag.  
+		<p>
+	</div>
+	<form method="POST">
+		<table>
+			<tr>
+				<td>
+					<input type="radio" name="allorsome" value="all" checked>Use all contacts
+				</td>
+				<td>
+					<input type="radio" name="allorsome" value="some">Only use contacts with this tag:
+					<select name="tags">
+						<option value="" disabled selected>Select a tag</option>
+
+	"""
+	for eachid in alltags:
+		pagehtml = pagehtml + """
+									<option value="%s">%s</option>
+		""" %(str(eachid[0]), eachid[1])
+	pagehtml += """
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<label for="numcon">Number Of Contacts To Choose:</label>
+					<input type="text" name="numcon">
+				</td>
+			</tr>
+		</table>
+		<input type="submit" name="rancon2" value="Get Results">
+	</form>
+	"""
+
+	return pagehtml
+def randomContacts2(postdata, server):
+	"""
+	This function takes the criteria for the random selection of contacts, verifies that they are logical (ie: there
+	are enough contacts in the pool to meet the number of contacts) and then displays the list of randomly chosen
+	contacts.  There will be a button to apply tags to the selected contacts. 
+
+	"""
+	alltags=[]
+	contactsinpool=[]
+	selectedcontacts=set()
+	server.prep()
+	if not(postdata.has_key('numcon')):
+		return """Error: No number of contacts Selected"""
+	else:
+		try:
+			numberToSelect=int(postdata['numcon'].value)
+		except:
+			return """Error: Number of contacts must only contain integers and no other characters"""
+	if not(postdata.has_key('allorsome')):
+		return """Error: You must either select all contacts or just a subset of contacts"""
+	if (postdata['allorsome'].value == 'some'):
+		if not(postdata.has_key('tags')):
+			return """Error: If "Use all contacts" is not selected you must choose a tag"""
+		else:
+			pooltagID = int(postdata['tags'].value)
+			contactsinpool = server.getContactIDWithTag(pooltagID)
+	else:
+		contactsinpool = server.getAllContacts()
+	if (numberToSelect>len(contactsinpool)):
+		return """Error: You cannot select %s records when there are only %s in the pool"""%(str(numberToSelect), str(len(contactsinpool)))
+	elif (numberToSelect == len(contactsinpool)):
+		selectedcontacts = set(contactsinpool)
+	else:
+		while (len(selectedcontacts)<numberToSelect):
+			selectedcontacts.add(random.choice(contactsinpool))
+
+	tagids=server.tags.keys()
+	for eachid in tagids:
+		alltags.append((eachid, server.tags[eachid].name))
+	alltags.sort(key=lambda val:val[1])
+
+	pagehtml = """
+	<form method="POST">
+		<div class="whatToDo">
+			<table border="2">
+				<tr>
+					<td>
+						<label>
+							<input type="radio" name="neworold" value="new" checked>
+							Apply New Tag 
+						</label><br />
+						<input type="text" name="tagToCreate" />
+					</td>
+					<td>
+						<label>
+							<input type="radio" name="neworold" value="old">
+							Apply existing Tag 
+						</label><br />
+						<select name="tags">
+						<option value="" disabled selected>Select a tag</option>
+
+	"""
+	for eachid in alltags:
+		pagehtml = pagehtml + """
+									<option value="%s">%s</option>
+		""" %(str(eachid[0]), eachid[1])
+	pagehtml += """
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<input type="submit" name="updateRanCon" value = "Apply tag to selected Contacts">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="selected Records" >
+			<table border="2">
+	"""
+	for eachrecord in selectedcontacts:
+		pagehtml +="""
+				<tr>
+					<td width="50">
+						<input type="hidden" name="contactID" value="%s">
+						%s
+					</td>
+					<td width="200">
+						%s
+					</td>
+					<td width="200">
+						%s
+					</td>
+					<td width="500">
+						%s
+					</td>
+				</tr>
+		""" %(str(eachrecord.cid), str(eachrecord.cid), str(eachrecord.fname), str(eachrecord.lname), str(eachrecord.email))
+	pagehtml += """
+			</table>
+		</div>
+	"""
+
+	return pagehtml
+
+def updateRandomContacts(postdata,server):
+	server.prep()
+	if (postdata['neworold'].value=="new"):
+		if not(postdata.has_key('tagToCreate')):
+			return """Error: Need To Type in tag to create"""
+		else:
+			tagID=server.createNewTag(postdata['tagToCreate'].value)
+	else:
+		if not(postdata.has_key('tags')):
+			return """Error: No Tag Selected"""
+		else:
+			tagID=int(postdata['tags'].value)
+	for eachrecord in postdata['contactID']:
+		server.addTagToContact(int(eachrecord.value), tagID)
+	return "Completed!"
+
+
 
 
 def footer():
