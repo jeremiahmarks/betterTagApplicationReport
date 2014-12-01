@@ -53,10 +53,37 @@ def sorting(postdata):
 	elif (postdata.has_key('createandapplytag')):
 		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
 		server.prep()
-		newTagId=server.createNewTag(postdata['tagtoapply'].value)
+		if (postdata['neworold'].value == 'new'):
+			newTagId=server.createNewTag(postdata['tagtoapply'].value)
+		else:
+			newTagId = int(postdata['tags'].value)
 		myfunc.updateSeveralContacts(postdata, newTagId, server)
 		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.overview(server) + myfunc.footer()
 		print pagehtml
+	elif (postdata.has_key('rancon')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		server.prep()
+		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.randomContacts(postdata, server) + myfunc.footer()
+		print pagehtml
+	elif (postdata.has_key('rancon2')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		server.prep()
+		pagehtml = myfunc.randomContacts2(postdata, server)
+		if (pagehtml[:5]=="Error"):
+			pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.overview(server, pagehtml) + myfunc.footer()
+		else:
+			pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + pagehtml + myfunc.footer()
+		print pagehtml
+	elif (postdata.has_key('updateRanCon')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		server.prep()
+		pagehtml = myfunc.updateRandomContacts(postdata, server)
+		if (pagehtml[:5]=="Error"):
+			pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.overview(server, pagehtml) + myfunc.footer()
+		else:
+			pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + pagehtml + myfunc.footer()
+		print pagehtml
+
 	elif (mysessions.SESSION['loggedin']==True):
 		server=myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
 		pagehtml = myfunc.prehead()+myfunc.htmlHead() + myfunc.menu() + myfunc.overview(server) + myfunc.footer()
