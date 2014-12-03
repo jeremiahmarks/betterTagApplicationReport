@@ -36,9 +36,18 @@ class TagAppliedRecord:
 
 	def __init__(self, contactID, contactFName, contactLName, contactEmail, tagName, tagID,tagtime):
 		self.contactID=contactID
-		self.fname=contactFName
-		self.lname=contactLName
-		self.email=contactEmail
+		if not contactFName:
+			self.fname="No FName"
+		else:
+			self.fname=u''.join(contactFName).encode('utf-8').strip()
+		if not contactLName:
+			self.lname="No LName"
+		else:
+			self.lname=u''.join(contactLName).encode('utf-8').strip()
+		if not contactEmail:
+			self.email="No Email"
+		else:
+			self.email=u''.join(contactEmail).encode('utf-8').strip()
 		self.tagname=tagName
 		self.tagid=tagID
 		self.whenapplied=tagtime
@@ -89,6 +98,10 @@ class ISServer:
 			for eachApplication in listOfDicts:
 				datetimeapplied = time.strptime(eachApplication['DateCreated'].value, '%Y%m%dT%H:%M:%S')
 				if ((datetimeapplied>=sdate) and (datetimeapplied<=edate)):
+					interestingData = ["Contact.FirstName", "Contact.LastName", 'Contact.Email']
+					for eachbit in interestingData:
+						if not eachApplication.has_key(eachbit):
+							eachApplication[eachbit]=None
 					records.append(TagAppliedRecord(eachApplication['Contact.Id'],eachApplication['Contact.FirstName'],eachApplication['Contact.LastName'],eachApplication['Contact.Email'], self.tags[tagID].name, tagID, datetimeapplied))
 			if not(len(listOfDicts)==1000):
 				break
