@@ -11,3 +11,20 @@ This product is provided without warranty or guarantee. If you would like to see
 you may see it at [crackbrain](http://crackbra.in)
 
 Thanks!
+
+
+#Things to do:
+
+[] Add a tag overview that displays all tags and how many contacts have each tag. 
+[] Clean up duplicate functionality in the application
+[] Set up functionality that you can download parts of your application to a sql database
+[] Set up a test order creation process
+[] Create better Import functionality:  
+    [] Application accepts .csv file
+    [] Gets all headers from csv file
+    [] maps headers to correct fields
+    [] for each line if the line has an Infusionsoft ID: update the correct contact record
+    [] for each line if the line has an email address that is already in the system, update the correct record
+    [] for each line if the line does not have a matching record, create a new record. 
+[] Better update with CC:
+    [] ability to update contact records and add CC data to the record
