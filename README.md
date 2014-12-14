@@ -28,3 +28,4 @@ Thanks!
     [] for each line if the line does not have a matching record, create a new record.   
 [] Better update with CC:  
     [] ability to update contact records and add CC data to the record  
+[] Update server that it will get all custom fields

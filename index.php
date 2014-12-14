@@ -83,6 +83,12 @@ def sorting(postdata):
 		else:
 			pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + pagehtml + myfunc.footer()
 		print pagehtml
+	elif (postdata.has_key('alltags')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		
+		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.tagsWithContacts(postdata, server) + myfunc.footer()
+		print pagehtml
+
 
 	elif (mysessions.SESSION['loggedin']==True):
 		server=myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])

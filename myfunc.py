@@ -221,6 +221,7 @@ def menu():
 			<input type="submit" name="logout" value="Logout">
 			<input type="submit" name="btar" value="Better tag application report">
 			<input type="submit" name="rancon" value="Pick Random Contacts">
+			<input type="submit" name="alltags" value="All tags">
 		</form>
 	</div>
 	"""
@@ -619,6 +620,37 @@ def updateRandomContacts(postdata,server):
 	for eachrecord in postdata['contactID']:
 		server.addTagToContact(int(eachrecord.value), tagID)
 	return "Completed!"
+
+def tagsWithContacts(postdata, server):
+	server.prep()
+	tagids = server.tags.keys()
+	tagcounts = []
+	for eachid in tagids:
+		tagcounts.append((eachid, server.tags[eachid].name, server.getCount('ContactGroupAssign',{'GroupId':eachid})))
+	tagcounts.sort(key=lambda val:val[2])
+	pagehtml = """
+	<table name="tagsApplied">
+	<tr>
+		<td width="250">tagID</td>
+		<td width="500">Tag Text</td>
+		<td width="250">Number of contacts with tag</td>
+	</tr>
+	
+
+	"""
+	for eachrecord in tagcounts:
+		pagehtml += """
+			<tr>
+				<td >%s</td>
+				<td >%s</td>
+				<td >%s</td>
+			</tr>	
+		""" %(str(eachrecord[0]),str(eachrecord[1]), str(eachrecord[2]))
+	pagehtml += """
+	</table>
+	"""
+
+	return pagehtml
 
 
 
