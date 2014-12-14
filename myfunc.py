@@ -156,6 +156,8 @@ class ISServer:
 	def addTagToContact(self, contactID, tagID):
 		self.connection.ContactService.addToGroup(self.infusionsoftAPIKey, contactID, tagID)
 
+	def deleteTag(self, tagID):
+		self.connection.DataService.delete(self.infusionsoftAPIKey, 'ContactGroup', tagID)
 
 def prehead():
 	pagehtml="""Content-type: text/html\n\n\n"""
@@ -321,6 +323,8 @@ def processInfo(postdata,server):
 	else:
 		contacts.append(server.getContactsWithTag(sstring,estring,int(postdata['tags'].value)))
 		taglist.append(server.tags[int(postdata['tags'].value)].name)
+
+	contacts[0].sort(key=lambda val:val.whenapplied)
 	tagstring=''
 	for eachtagname in taglist:
 		tagstring = tagstring + eachtagname
@@ -651,6 +655,16 @@ def tagsWithContacts(postdata, server):
 	"""
 
 	return pagehtml
+
+def deletezerousertags(server):
+	"""
+	since you are unable to delete tags through the api, this is a pointless method.
+	"""
+	server.prep()
+	tagids = server.tags.keys()
+	for eachid in tagids:
+		if (server.getCount('ContactGroupAssign',{'GroupId':eachid})==0):
+			server.deleteTag(eachid)
 
 
 
