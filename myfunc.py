@@ -31,22 +31,11 @@ class BasicContact(object):
 			self.email="no Email Listed"
 		else:
 			self.email=u''.join(emailAddress).encode('utf-8').strip()
-class TagAppliedRecord:
+class TagAppliedRecord(BasicContact):
 
 	def __init__(self, contactID, contactFName, contactLName, contactEmail, tagName, tagID,tagtime):
 		self.contactID=contactID
-		if not contactFName:
-			self.fname="No FName"
-		else:
-			self.fname=u''.join(contactFName).encode('utf-8').strip()
-		if not contactLName:
-			self.lname="No LName"
-		else:
-			self.lname=u''.join(contactLName).encode('utf-8').strip()
-		if not contactEmail:
-			self.email="No Email"
-		else:
-			self.email=u''.join(contactEmail).encode('utf-8').strip()
+		super(TagAppliedRecord, self).__init__(contactID, contactFName, contactLName, contactEmail)
 		self.tagname=tagName
 		self.tagid=tagID
 		self.whenapplied=tagtime
