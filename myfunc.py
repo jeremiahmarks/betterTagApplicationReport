@@ -16,22 +16,21 @@ class ISTag:
 		self.name=tagname
 		self.categoryid=categoryid
 
-class BasicContact:
+class BasicContact(object):
 	def __init__(self, contactID, fname=None, lname=None, emailAddress=None ):
 		self.cid = contactID
-		if not fname:
+		if (not(fname) or fname==None):
 			self.fname="No fName"
 		else:
 			self.fname=u''.join(fname).encode('utf-8').strip()
-		if not lname:
+		if (not(lname) or lname==None):
 			self.lname="No lName"
 		else:
 			self.lname=u''.join(lname).encode('utf-8').strip()
-		if not emailAddress:
+		if (not(emailAddress) or emailAddress==None):
 			self.email="no Email Listed"
 		else:
 			self.email=u''.join(emailAddress).encode('utf-8').strip()
-
 class TagAppliedRecord:
 
 	def __init__(self, contactID, contactFName, contactLName, contactEmail, tagName, tagID,tagtime):
@@ -51,6 +50,13 @@ class TagAppliedRecord:
 		self.tagname=tagName
 		self.tagid=tagID
 		self.whenapplied=tagtime
+
+class ContactWithCreditCard(BasicContact):
+	"""docstring for ContactWithCreditCard"""
+	def __init__(self, CardID, Last4, contactID, fname, lname, emailAddress):
+		super(ContactWithCreditCard, self).__init__(contactID, fname, lname, emailAddress)
+		self.cardid=CardID
+		self.last4=Last4
 
 class ISServer:
 
@@ -159,10 +165,51 @@ class ISServer:
 	def deleteTag(self, tagID):
 		self.connection.DataService.delete(self.infusionsoftAPIKey, 'ContactGroup', tagID)
 
+	def placeOrder(self, contactID, creditCardId, payPlanId, productIds, subscriptionPlanIds, processSpecials, promoCodes, leadAffiliateId, saleAffiliateId):
+		return self.connection.OrderService.placeOrder(self.infusionsoftAPIKey, int(contactID), int(creditCardId), int(payPlanId), productIds, subscriptionPlanIds, processSpecials, promoCodes, leadAffiliateId, saleAffiliateId)
+
+	def getContactsWithCards(self):
+		records=[]
+		p=0
+
+		while True:
+			listOfDicts = self.connection.DataService.query(self.infusionsoftAPIKey, 'CreditCard', 1000,p,{},['Id', 'ContactId', 'Email','FirstName', 'LastName', 'Last4'], 'Id', True)
+			for each in listOfDicts:
+				interestingData=["Id", 'ContactId', 'Email','FirstName', 'LastName', 'Last4']
+				if not(each.has_key('Email') or each.has_key('FirstName') or each.has_key('LastName')):
+					pass
+				else:
+					for eachbit in interestingData:
+						if not each.has_key(eachbit):
+							each[eachbit]=None
+					records.append(ContactWithCreditCard(each['Id'], each['Last4'],each['ContactId'], each['FirstName'], each['LastName'], each['Email'] ))
+			if not(len(listOfDicts)==1000):
+				break
+			p+=1
+		return records
+
+	def getAllProducts(self):
+		records=[]
+		p=0
+
+		while True:
+			listOfDicts = self.connection.DataService.query(self.infusionsoftAPIKey, 'Product', 1000, p, {}, ['Id', 'ProductName', 'ProductPrice', 'ShippingTime', 'IsPackage', 'HideInStore'], 'Id', True)
+			for each in listOfDicts:
+				interestingData=['ProductName', 'ProductPrice', 'ShippingTime', 'IsPackage', 'HideInStore']
+				for eachbit in interestingData:
+					if not each.has_key(eachbit):
+						each[eachbit]=None
+				records.append((each['Id'], each['ProductName'], each['ProductPrice'], each['ShippingTime'], each['IsPackage'], each['HideInStore']))
+			if not(len(listOfDicts)==1000):
+				break
+			p+=1
+		return records
+
+
+
 def prehead():
 	pagehtml="""Content-type: text/html\n\n\n"""
 	return pagehtml
-
 def htmlHead():
 	pagehtml = """
 	<html>
@@ -215,7 +262,6 @@ def htmlHead():
 		<body>
 	"""
 	return pagehtml
-
 def menu():
 	pagehtml="""
 	<div>
@@ -224,11 +270,11 @@ def menu():
 			<input type="submit" name="btar" value="Better tag application report">
 			<input type="submit" name="rancon" value="Pick Random Contacts">
 			<input type="submit" name="alltags" value="All tags">
+			<input type="submit" name="ordertest" value="Test Order Creation" />
 		</form>
 	</div>
 	"""
 	return pagehtml
-
 def selectionScreen(dictOfTags):
 	pagehtml = """
 
@@ -289,7 +335,6 @@ def selectionScreen(dictOfTags):
 			</form>
 	"""
 	return pagehtml
-
 def processInfo(postdata,server):
 	contacts=[]
 	taglist=[]
@@ -390,7 +435,6 @@ def processInfo(postdata,server):
 			</form>
 	"""
 	return pagehtml
-
 def gatherInfo():
 	pagehtml= """
 
@@ -426,7 +470,6 @@ def gatherInfo():
 			</form>
 	"""
 	return pagehtml
-
 def overview(server, errormessage=None):
 
 	totalTags = server.getCount('ContactGroup',{})
@@ -447,14 +490,12 @@ def overview(server, errormessage=None):
 		<div class="errormessage">%s</div>
 		""" %(errormessage)
 	return pagehtml
-
 def updateSeveralContacts(postdata, newTagId, server):
 	allpostkeys=postdata.keys()
 	for eachkey in allpostkeys:
 		if (eachkey[:6]=="update"):
 			cid=int(postdata[eachkey].value)
 			server.addTagToContact(cid, newTagId)
-
 def randomContacts(postdata, server):
 	alltags=[]
 
@@ -608,7 +649,6 @@ def randomContacts2(postdata, server):
 	"""
 
 	return pagehtml
-
 def updateRandomContacts(postdata,server):
 	server.prep()
 	if (postdata['neworold'].value=="new"):
@@ -624,7 +664,6 @@ def updateRandomContacts(postdata,server):
 	for eachrecord in postdata['contactID']:
 		server.addTagToContact(int(eachrecord.value), tagID)
 	return "Completed!"
-
 def tagsWithContacts(postdata, server):
 	server.prep()
 	tagids = server.tags.keys()
@@ -655,7 +694,6 @@ def tagsWithContacts(postdata, server):
 	"""
 
 	return pagehtml
-
 def deletezerousertags(server):
 	"""
 	since you are unable to delete tags through the api, this is a pointless method.
@@ -665,9 +703,152 @@ def deletezerousertags(server):
 	for eachid in tagids:
 		if (server.getCount('ContactGroupAssign',{'GroupId':eachid})==0):
 			server.deleteTag(eachid)
+def makeProductTable(records):
+	pagehtml = """
+	<table>
+		<tr>
+			<td>ID</td>
+			<td>Product</td>
+			<td>Price</td>
+			<td>ShippingTimer</td>
+			<td>IsPackage</td>
+			<td>HideInStore</td>
+		</tr>
+	"""
+	for eachproduct in records:
+		pagehtml +="""
+		<tr>
+			<td>%s</td>
+			<td>%s</td>
+			<td>%s</td>
+			<td>%s</td>
+			<td>%s</td>
+			<td>%s</td>
+		</tr>
+		"""%(str(eachproduct[0]),str(eachproduct[1]),str(eachproduct[2]),str(eachproduct[3]),str(eachproduct[4]),str(eachproduct[5]))
+	pagehtml+="""
+	</table>
+	"""
+	return pagehtml
+def purchasepage1():
+	pagehtml="""
+	<h1>WARNING:</h1>
+	<h3>If you do not have a Demo merchant account, this process can and will charge against a real merchant account.</h3>
+	<p>Basically:  Unless you really really want to do this, don't.</p>
+	<form method="POST">
+		<input type="submit" name="goto2" value="I understand, please proceed">
+	</form>
+	"""
+	return pagehtml
+def purchasepage2(server):
+	contacts = []
+	contacts = server.getContactsWithCards()
+
+	pagehtml = """
+	<h1>Purchase Step 1</h1>
+	<h3>Select a contact</h3>
+	<p>This is a list of all contact with credit cards.</p>
+	<form method="POST">
+		<table>
+			<tr>
+				<td>Select</td>
+				<td>First Name</td>
+				<td>Last Name</td>
+				<td>Email Address</td>
+				<td>Last 4 of CC on file</td>
+			</tr>
+	"""
+	for each in contacts:
+		pagehtml+="""
+			<tr>
+				<td><input type="radio" name="cid" value="%s_%s" /></td>
+				<td>%s</td>
+				<td>%s</td>
+				<td>%s</td>
+				<td>%s</td>
+			</tr>
+		"""%(str(each.cid), str(each.cardid), str(each.fname), str(each.lname), str(each.email), str(each.last4))
+	pagehtml+="""
+		</table>
+		<input type="submit" name="goto3" value="Use Selected Contact" />
+	</form>
+	"""
+	return pagehtml
+#action="http://requestb.in/12uvjee1"	
+def purchasepage3(postdata, server):
+	products=server.getAllProducts()
+	cid, ccid = postdata['cid'].value.split('_')
+	pagehtml="""
+	<form method="POST" >
+		<table>
+			<tr>
+				<td>Promo Code:(required)</td>
+				<td><input type="hidden" name="promocode" value="apitest" /> </td>
+			</tr>
+		</table>
+		<input type="hidden" name="cid" value="%s" />
+		<input type="hidden" name="ccid" value="%s" />
+		<table>
+			<tr>
+				<td>Select</td>
+				<td>Product Name</td>
+				<td>Product Price</td>
+			</tr>
+	"""%(cid, ccid)
+	for each in products:
+		pagehtml+="""
+			<tr>
+				<td><input type="radio" name="product" value="%s" /></td>
+				<td>%s</td>
+				<td>%s</td>
+		"""%(str(each[0]),str(each[1]), str(each[2]))
+	pagehtml+="""
+		</table>
+		<input type="submit" name="goto4" value="Use Selected Product">
+	</table>
+	"""
+	return pagehtml
+
+def purchasepage4(postdata, server):
+	cid = int(postdata['cid'].value)
+	ccid = int(postdata['ccid'].value)
+	payPlanId=0
+	product=[]
+	product.append(int(postdata['product'].value))
+	subscriptions=[]
+	processSpecials=True
+	promoCodes=[]
+	promoCodes.append(postdata['promocode'].value)
+	leadAff=0
+	salesAff=0
+
+	argsString = """
+	cid = %s <br />
+	ccid = %s <br />
+	payPlanId = %s <br />
+	productIds = %s <br />
+	subscriptionPlanIds = %s <br />
+	processSpecials = %s <br />
+	promoCodes = %s <br />
+	leadAffiliateId = %s <br />
+	saleAffiliateId = %s <br />
+
+	"""%(str(cid), str(ccid), str(payPlanId), str(product), str(subscriptions), str(processSpecials), str(promoCodes), str(leadAff), str(salesAff))
+	try:
+		orderresults=server.placeOrder(cid, ccid, payPlanId,product, subscriptions, processSpecials, promoCodes,leadAff,salesAff)
+		updateStatus="""
+		Order %s was successfully created.
+		"""%(str(orderresults['OrderId']))
+	except Exception as e:
+		updateStatus="""<h1>Failure</h1><br /> """ + argsString
+	return updateStatus
 
 
 
+try:
+	pass
+except Exception, e:
+	raise e
 
 def footer():
 	pagehtml="""

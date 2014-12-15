@@ -19,6 +19,7 @@ Thanks!
 - [ ] Clean up duplicate functionality in the application  
 - [ ] Set up functionality that you can download parts of your application to a sql database  
 - [ ] Set up a test order creation process  
+    - [x] Created initial test process to prove that it is a doable thing.
 - [ ] Create better Import functionality:    
     - [ ] Application accepts .csv file  
     - [ ] Gets all headers from csv file  

@@ -88,7 +88,22 @@ def sorting(postdata):
 		
 		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.tagsWithContacts(postdata, server) + myfunc.footer()
 		print pagehtml
-
+	elif (postdata.has_key('ordertest')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.purchasepage1() + myfunc.footer()
+		print pagehtml
+	elif (postdata.has_key('goto2')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.purchasepage2(server) + myfunc.footer()
+		print pagehtml
+	elif (postdata.has_key('goto3')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.purchasepage3(postdata, server) + myfunc.footer()
+		print pagehtml
+	elif (postdata.has_key('goto4')):
+		server = myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
+		pagehtml = myfunc.prehead() + myfunc.htmlHead() + myfunc.menu() + myfunc.purchasepage4(postdata, server) + myfunc.footer()
+		print pagehtml
 
 	elif (mysessions.SESSION['loggedin']==True):
 		server=myfunc.ISServer(mysessions.SESSION['appname'], mysessions.SESSION['apikey'])
