@@ -10,7 +10,6 @@ defaultEnd='29991231T23:59:59'
 
 
 class ISTag:
-
 	def __init__(self, tagid, tagname, categoryid):
 		self.tagid=tagid
 		self.name=tagname
@@ -31,8 +30,8 @@ class BasicContact(object):
 			self.email="no Email Listed"
 		else:
 			self.email=u''.join(emailAddress).encode('utf-8').strip()
-class TagAppliedRecord(BasicContact):
 
+class TagAppliedRecord(BasicContact):
 	def __init__(self, contactID, contactFName, contactLName, contactEmail, tagName, tagID,tagtime):
 		self.contactID=contactID
 		super(TagAppliedRecord, self).__init__(contactID, contactFName, contactLName, contactEmail)
@@ -41,15 +40,12 @@ class TagAppliedRecord(BasicContact):
 		self.whenapplied=tagtime
 
 class ContactWithCreditCard(BasicContact):
-	"""docstring for ContactWithCreditCard"""
 	def __init__(self, CardID, Last4, contactID, fname, lname, emailAddress):
 		super(ContactWithCreditCard, self).__init__(contactID, fname, lname, emailAddress)
 		self.cardid=CardID
 		self.last4=Last4
 
 class ISServer:
-
-
 	def __init__(self, infusionsoftapp, infusionsoftAPIKey):
 		self.infusionsoftapp=infusionsoftapp
 		self.infusionsoftAPIKey=infusionsoftAPIKey
@@ -81,7 +77,6 @@ class ISServer:
 	def prep(self):
 		self.getTagCats()
 		self.getAllTags()
-
 
 	def getContactsWithTag(self, startdate="19000101T00:00:00", enddate="30001231T23:59:59", tagID=303):
 		records=[]
@@ -160,7 +155,6 @@ class ISServer:
 	def getContactsWithCards(self):
 		records=[]
 		p=0
-
 		while True:
 			listOfDicts = self.connection.DataService.query(self.infusionsoftAPIKey, 'CreditCard', 1000,p,{},['Id', 'ContactId', 'Email','FirstName', 'LastName', 'Last4'], 'Id', True)
 			for each in listOfDicts:
@@ -180,7 +174,6 @@ class ISServer:
 	def getAllProducts(self):
 		records=[]
 		p=0
-
 		while True:
 			listOfDicts = self.connection.DataService.query(self.infusionsoftAPIKey, 'Product', 1000, p, {}, ['Id', 'ProductName', 'ProductPrice', 'ShippingTime', 'IsPackage', 'HideInStore'], 'Id', True)
 			for each in listOfDicts:
@@ -194,11 +187,10 @@ class ISServer:
 			p+=1
 		return records
 
-
-
 def prehead():
 	pagehtml="""Content-type: text/html\n\n\n"""
 	return pagehtml
+
 def htmlHead():
 	pagehtml = """
 	<html>
@@ -230,7 +222,7 @@ def htmlHead():
 
 
 				h1,h2,h3 {
-				  color:#fff;
+				  color:#ff0000;
 				  text-align:center;
 				}
 				.errormessage{
@@ -239,18 +231,14 @@ def htmlHead():
 					font-size: 64px;
 				}
 			</style>
-
-
-							
-
 			<meta http-equiv="Content-type" content="text/html;" />
 			<title> Crackbrain: One off functions for Infusionsoft</title>
 			<meta name="description" Content="One off searches and functions that are not a part of Infusionsoft." />
-
 		</head>
 		<body>
 	"""
 	return pagehtml
+
 def menu():
 	pagehtml="""
 	<div>
@@ -264,6 +252,7 @@ def menu():
 	</div>
 	"""
 	return pagehtml
+
 def selectionScreen(dictOfTags):
 	pagehtml = """
 
@@ -288,20 +277,16 @@ def selectionScreen(dictOfTags):
 								<td width="310px">
 									<input type="hidden" name="runbtar" value="run">
 									<label for="startdate" >Start Date:</label>
-									<input type="text" class="datepicker text" name="startdate" style="width:300px;">
-									
+									<input type="text" class="datepicker text" name="startdate" style="width:300px;">									
 								</td>
-								<td width="310px">
-									
+								<td width="310px">									
 									<label for="enddate">End Date:</label>
-									<input type="text" class="datepicker text" name="enddate" style="width:300px;">
-									
+									<input type="text" class="datepicker text" name="enddate" style="width:300px;">									
 								</td>
 							</tr>
 						</table>
 					</div>
-					<div>
-						
+					<div>						
 						<label for="tags">Tag of interest: </label>
 						<select  name="tags">
 							<option value="" disabled selected>Select a tag</option>
@@ -324,18 +309,16 @@ def selectionScreen(dictOfTags):
 			</form>
 	"""
 	return pagehtml
+
 def processInfo(postdata,server):
 	contacts=[]
 	taglist=[]
 	alltags=[]
-
 	server.prep()
-
 	tagids=server.tags.keys()
 	for eachid in tagids:
 		alltags.append((eachid, server.tags[eachid].name))
 	alltags.sort(key=lambda val:val[1])
-
 	if postdata.has_key('startdate'):
 		smonth, sday, syear=postdata['startdate'].value.split('/')
 		smonth = "%02d" %int(smonth)
@@ -357,7 +340,6 @@ def processInfo(postdata,server):
 	else:
 		contacts.append(server.getContactsWithTag(sstring,estring,int(postdata['tags'].value)))
 		taglist.append(server.tags[int(postdata['tags'].value)].name)
-
 	contacts[0].sort(key=lambda val:val.whenapplied)
 	tagstring=''
 	for eachtagname in taglist:
@@ -424,9 +406,9 @@ def processInfo(postdata,server):
 			</form>
 	"""
 	return pagehtml
+
 def gatherInfo():
 	pagehtml= """
-
 				<div class="p1">
 					<h3>Welcome to Crackbra.in.</h3>
 					<p>
@@ -440,7 +422,6 @@ def gatherInfo():
 						You can examine the most recent copy of the source code (that I have been bothered to upload) <a href="https://github.com/jeremiahmarks/betterTagApplicationReport">on its github page</a>, so you can self host this if you so wish.  This is also available so that you can improve it, please do fork the daylights out of it!. 
 					</p>
 				</div>
-
 				<div class="p2">
 					<p>
 						If the most recent version of code that is operating here does not appear to be hosted on github, or there is some 
@@ -448,8 +429,6 @@ def gatherInfo():
 						and let me know.  
 					</p>
 				</div>
-
-
 			<form method="POST">
 				<label for="appname">Appname</label>
 				<input type="text" name="appname" id="appname">
@@ -459,8 +438,8 @@ def gatherInfo():
 			</form>
 	"""
 	return pagehtml
-def overview(server, errormessage=None):
 
+def overview(server, errormessage=None):
 	totalTags = server.getCount('ContactGroup',{})
 	totalContacts=server.getCount('Contact',{})
 	pagehtml = """
@@ -479,22 +458,21 @@ def overview(server, errormessage=None):
 		<div class="errormessage">%s</div>
 		""" %(errormessage)
 	return pagehtml
+
 def updateSeveralContacts(postdata, newTagId, server):
 	allpostkeys=postdata.keys()
 	for eachkey in allpostkeys:
 		if (eachkey[:6]=="update"):
 			cid=int(postdata[eachkey].value)
 			server.addTagToContact(cid, newTagId)
+
 def randomContacts(postdata, server):
 	alltags=[]
-
 	server.prep()
-
 	tagids=server.tags.keys()
 	for eachid in tagids:
 		alltags.append((eachid, server.tags[eachid].name))
 	alltags.sort(key=lambda val:val[1])
-
 	pagehtml = """
 	<div class="ranconExplanation" >
 		<p>
@@ -532,14 +510,13 @@ def randomContacts(postdata, server):
 		<input type="submit" name="rancon2" value="Get Results">
 	</form>
 	"""
-
 	return pagehtml
+
 def randomContacts2(postdata, server):
 	"""
 	This function takes the criteria for the random selection of contacts, verifies that they are logical (ie: there
 	are enough contacts in the pool to meet the number of contacts) and then displays the list of randomly chosen
 	contacts.  There will be a button to apply tags to the selected contacts. 
-
 	"""
 	alltags=[]
 	contactsinpool=[]
@@ -569,12 +546,10 @@ def randomContacts2(postdata, server):
 	else:
 		while (len(selectedcontacts)<numberToSelect):
 			selectedcontacts.add(random.choice(contactsinpool))
-
 	tagids=server.tags.keys()
 	for eachid in tagids:
 		alltags.append((eachid, server.tags[eachid].name))
 	alltags.sort(key=lambda val:val[1])
-
 	pagehtml = """
 	<form method="POST">
 		<div class="whatToDo">
@@ -636,8 +611,8 @@ def randomContacts2(postdata, server):
 			</table>
 		</div>
 	"""
-
 	return pagehtml
+
 def updateRandomContacts(postdata,server):
 	server.prep()
 	if (postdata['neworold'].value=="new"):
@@ -653,6 +628,7 @@ def updateRandomContacts(postdata,server):
 	for eachrecord in postdata['contactID']:
 		server.addTagToContact(int(eachrecord.value), tagID)
 	return "Completed!"
+
 def tagsWithContacts(postdata, server):
 	server.prep()
 	tagids = server.tags.keys()
@@ -667,8 +643,6 @@ def tagsWithContacts(postdata, server):
 		<td width="500">Tag Text</td>
 		<td width="250">Number of contacts with tag</td>
 	</tr>
-	
-
 	"""
 	for eachrecord in tagcounts:
 		pagehtml += """
@@ -681,44 +655,8 @@ def tagsWithContacts(postdata, server):
 	pagehtml += """
 	</table>
 	"""
+	return pagehtml
 
-	return pagehtml
-def deletezerousertags(server):
-	"""
-	since you are unable to delete tags through the api, this is a pointless method.
-	"""
-	server.prep()
-	tagids = server.tags.keys()
-	for eachid in tagids:
-		if (server.getCount('ContactGroupAssign',{'GroupId':eachid})==0):
-			server.deleteTag(eachid)
-def makeProductTable(records):
-	pagehtml = """
-	<table>
-		<tr>
-			<td>ID</td>
-			<td>Product</td>
-			<td>Price</td>
-			<td>ShippingTimer</td>
-			<td>IsPackage</td>
-			<td>HideInStore</td>
-		</tr>
-	"""
-	for eachproduct in records:
-		pagehtml +="""
-		<tr>
-			<td>%s</td>
-			<td>%s</td>
-			<td>%s</td>
-			<td>%s</td>
-			<td>%s</td>
-			<td>%s</td>
-		</tr>
-		"""%(str(eachproduct[0]),str(eachproduct[1]),str(eachproduct[2]),str(eachproduct[3]),str(eachproduct[4]),str(eachproduct[5]))
-	pagehtml+="""
-	</table>
-	"""
-	return pagehtml
 def purchasepage1():
 	pagehtml="""
 	<h1>WARNING:</h1>
@@ -729,10 +667,10 @@ def purchasepage1():
 	</form>
 	"""
 	return pagehtml
+
 def purchasepage2(server):
 	contacts = []
 	contacts = server.getContactsWithCards()
-
 	pagehtml = """
 	<h1>Purchase Step 1</h1>
 	<h3>Select a contact</h3>
@@ -763,7 +701,7 @@ def purchasepage2(server):
 	</form>
 	"""
 	return pagehtml
-#action="http://requestb.in/12uvjee1"	
+	
 def purchasepage3(postdata, server):
 	products=server.getAllProducts()
 	cid, ccid = postdata['cid'].value.split('_')
@@ -810,7 +748,6 @@ def purchasepage4(postdata, server):
 	promoCodes.append(postdata['promocode'].value)
 	leadAff=0
 	salesAff=0
-
 	argsString = """
 	cid = %s <br />
 	ccid = %s <br />
@@ -832,17 +769,9 @@ def purchasepage4(postdata, server):
 		updateStatus="""<h1>Failure</h1><br /> """ + argsString
 	return updateStatus
 
-
-
-try:
-	pass
-except Exception, e:
-	raise e
-
 def footer():
 	pagehtml="""
 		</body>
 	</html>
 	"""
 	return pagehtml
-
