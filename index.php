@@ -10,6 +10,10 @@ import xmlrpclib
 
 def sorting(postdata):
 	mysessions.start()
+	if (mysessions.SESSION.isset('counter')):
+		mysessions.SESSION['counter'] = mysessions.SESSION['counter'] + 1
+	else:
+		mysessions.SESSION['counter'] = 0
 	if not(mysessions.SESSION.isset('loggedin')):
 		mysessions.SESSION['loggedin']=False
 	if (postdata.has_key('logout')):

@@ -14,7 +14,7 @@ Note: A user must have cookies enabled!
 TODO:
 * Support Named Sessions
 
-Copyright 2010 - Sunjay Varma
+Copyright 2010-2015 - Sunjay Varma
 
 Latest Version: http://www.sunjay.ca/download/session.py
 """
@@ -26,6 +26,7 @@ import errno
 import hashlib
 import datetime
 import xmlrpclib
+## import workaround
 
 from Cookie import SimpleCookie
 from cPickle import dump, load, HIGHEST_PROTOCOL, dumps, loads
@@ -314,3 +315,12 @@ def print_session(session):
 		print "<dt>%s <i>%s</i></dt>"%(name, type(session[name]))
 		print "<dd>%s</dd>"%repr(session[name])
 	print "</dl>"
+
+def pses(session):
+	retStr=	"""<h3>Session Data</h3>
+				<dl>
+			"""
+	for name in session:
+		retStr=retStr+"<dt>%s <i>%s</i></dt>"%(name, type(session[name])) + "<dd>%s</dd>"%repr(session[name])
+	retStr += "</dl>"
+	return retStr

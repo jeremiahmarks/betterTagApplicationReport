@@ -1,9 +1,10 @@
 #!/usr/local/bin/python2.7
 
-
+import os
 import xmlrpclib
 import time
 import random
+import mysessions
 
 defaultStart='20000101T00:00:00'
 defaultEnd='29991231T23:59:59'
@@ -772,7 +773,8 @@ def purchasepage4(postdata, server):
 	return updateStatus
 
 def footer():
-	pagehtml="""
+	pagehtml=mysessions.pses(mysessions.SESSION) + """
+		mysessions.print_session(mysessions.SESSION)
 		</body>
 	</html>
 	"""
