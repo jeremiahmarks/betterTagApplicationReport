@@ -69,6 +69,8 @@ class ISServer:
 		while True:
 			listOfDicts=self.connection.DataService.query(self.infusionsoftAPIKey, "ContactGroup", 1000,p,{},['Id',"GroupCategoryId","GroupName"],"GroupName", True )
 			for eachtag in listOfDicts:
+				if not (eachtag.has_key('GroupName')):
+					eachtag['GroupName']=""
 				self.tags[eachtag['Id']]=(ISTag(eachtag['Id'], eachtag['GroupName'], eachtag['GroupCategoryId']))
 			if not(len(listOfDicts)==1000):
 				break
