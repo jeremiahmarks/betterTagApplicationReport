@@ -342,10 +342,8 @@ def processInfo(postdata,server):
 	else:
 		contacts.append(server.getContactsWithTag(sstring,estring,int(postdata['tags'].value)))
 		taglist.append(server.tags[int(postdata['tags'].value)].name)
-	totalResults=0
-	for eachcontactsearch in contacts.keys():
-		contacts[eachcontactsearch].sort(key=lambda val:val.whenapplied)
-		totalResults +=len(contacts[eachcontactsearch])
+	contacts[0].sort(key=lambda val:val.whenapplied)
+	totalResults=len(contacts[0])
 	tagstring=''
 	for eachtagname in taglist:
 		tagstring = tagstring + eachtagname
