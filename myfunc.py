@@ -342,7 +342,10 @@ def processInfo(postdata,server):
 	else:
 		contacts.append(server.getContactsWithTag(sstring,estring,int(postdata['tags'].value)))
 		taglist.append(server.tags[int(postdata['tags'].value)].name)
-	contacts[0].sort(key=lambda val:val.whenapplied)
+	totalResults=0
+	for eachcontactsearch in contacts.keys():
+		contacts[eachcontactsearch].sort(key=lambda val:val.whenapplied)
+		totalResults +=len(contacts[eachcontactsearch])
 	tagstring=''
 	for eachtagname in taglist:
 		tagstring = tagstring + eachtagname
@@ -382,13 +385,17 @@ def processInfo(postdata,server):
 				</div>
 				<table>
 					<tr>
+						<td colspan="4">%s</td>
+						<td width="200">Total Results</td>
+					</tr>
+					<tr>
 						<td width="50">Id</td>
 						<td width="200">Name</td>
 						<td width="200">Email</td>
 						<td width="200">Tag</td>
 						<td width="200">Applied</td>
 					</tr>
-	"""
+	"""%(str(totalResults))
 	for eachsearch in contacts:
 		for eachrecord in eachsearch:
 			recordURL="https://" + server.infusionsoftapp + ".infusionsoft.com/Contact/manageContact.jsp?view=edit&ID=" + str(eachrecord.contactID)
